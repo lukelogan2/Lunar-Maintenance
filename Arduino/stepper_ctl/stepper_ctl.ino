@@ -30,6 +30,7 @@ AccelStepper steppers[] = {
 
 int stepsPerRev = 200;  // steps per revolution
 int distancePerRev = 8; // 8 mm per revolution
+String data;            // Data input from python
 
 // Structure to help define digital pins
 typedef struct {
@@ -65,7 +66,6 @@ pinInit_t enaPins[] = {
 };
 
 void setup() {
-  
   for (int i=0;i<sizeof(digitPins)/sizeof(pinInit_t);i++) {
     pinMode(digitPins[i].pinNum, OUTPUT);
     digitalWrite(digitPins[i].pinNum,digitPins[i].pinVal);
@@ -74,9 +74,7 @@ void setup() {
     steppers[i].setMaxSpeed(1000.0);
     steppers[i].setAcceleration(100.0);
   }
-  
-  
-  Serial.begin(9600); // opens serial port, sets data rate to 9600 bps
+  Serial.begin(115200); // opens serial port, sets data rate to 9600 bps
 }
 
 void loop() {
@@ -103,4 +101,16 @@ void setPosition(double x, double y, double z) {
     steppers[i].runSpeedToPosition();
   }
   
+}
+
+// Serial Communication Handler
+void serialEvent() {
+  // If a message from the Raspberry Pi is present, read the data
+  if (Serial.available() > 0) {
+    data = Serial.readStringUntil('\n');
+    //DataRead = true;
+    Serial.println(data);
+  }
+  // Reset the serial buffer
+  Serial.flush();
 }

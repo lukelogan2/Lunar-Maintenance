@@ -5,8 +5,8 @@ from time import sleep
 import struct
 
 #Set address
-ser = serial.Serial('/dev/ttyACM0', 115200)
-arduino = serial.Serial(port='COM4', baudrate=115200, timeout=.1)
+#ser = serial.Serial('/dev/ttyACM0', 115200)
+arduino = serial.Serial(port='COM7', baudrate=115200, timeout=.1)
 #Wait for connection to complete
 sleep(3)
 
