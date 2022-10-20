@@ -6,30 +6,35 @@ import struct
 
 #Set address
 #ser = serial.Serial('/dev/ttyACM0', 115200)
-arduino = serial.Serial(port='COM7', baudrate=115200, timeout=.1)
+arduino = serial.Serial(port='COM7', baudrate=115200, timeout=2)
 #Wait for connection to complete
 sleep(3)
 
-#--------------------------------------------------------------------------
-def writeBlock(x, y):
-    bus.write_i2c_block_data(address, x, [y])
-    return -1
-
-def writeArduino(x,y,z):
-    arduino.write(struct.pack('>BBB',x,y,z))
-    time.sleep(0.05)
-
-def ReadfromArduino():
-    while (ser.in_waiting > 0):
+########################################################
+# Read Serial Input from Arduino
+########################################################
+def readSerial():
+    while (arduino.in_waiting > 0):
         try:
-            data = arduino.readline().decode('utf-8').rstrip()
-            return data
+            line = arduino.readline().decode('utf-8').rstrip()
+            print("serial output : ", line)
         except:
             print("Communication Error")
+
+########################################################
+# Write Serial Data to Arduino
+########################################################
+def writeArduino(c,X,Y,Z):
+    message = "{cmd}{Xpos}{Ypos}{Zpos}".format(cmd=c,Xpos=X,Ypos=Y,Zpos=Z)
+    try:
+        arduino.write(message.encode())
+        print("Writing " + message)
+    except:
+        print("Serial Message Failed to Send")
 #--------------------------------------------------------------------------
 #set Zero on Arduino
 try:
-    writeArduino(X,Y,Z)
+    writeArduino(0,0,0,0)
     sleep(.1)
 except:
     print("Communication Error")
