@@ -6,8 +6,6 @@
 #include <AccelStepper.h>
 #include <Servo.h>
 
-Servo myservo;  // create servo object to control a servo
-
 // X-axis stepper
 const int PUL_PINX = 2; // Yellow
 const int DIR_PINX = 3; // Green
@@ -31,12 +29,14 @@ AccelStepper steppers[] = {
   AccelStepper(motorInterfaceType, PUL_PINZ, DIR_PINZ)  // Z-axis stepper
 };
 
+Servo myservo;  // create servo object to control a servo
+
 int stepsPerRev = 200;  // steps per revolution
-int distancePerRev = 2; // 2 mm per revolution
+int distancePerRev = 8; // 2 mm per revolution
 String data;            // Data input from python
 bool DataRead = false;
 
-// Position Variables
+// Position Variables in mm
 int xpos = 0;
 int ypos = 0;
 int zpos = 0;
@@ -75,6 +75,10 @@ pinInit_t enaPins[] = {
   {ENA_PINZ, LOW}
 };
 
+// Solenoid Pin
+const byte valve_pin = 50;
+byte sol_pos = 0;
+
 // Pins for limit switch interrupts
 const byte LIMIT_PINX = 18;
 const byte LIMIT_PINY = 19;
@@ -84,7 +88,8 @@ const byte LIMIT_PINZ = 20;
 bool flags[] = {false,false,false};
 
 // Zeroing Variables for X,Y,Z
-bool zeroed[] = {false,false,false};
+//bool zeroed[] = {false,false,false};
+bool zeroed[] = {true,true,true}; // Wait for the python code to initialize zeroing
 long zeroPosition[] {0,0,0};
 
 void setup() {
@@ -99,6 +104,10 @@ void setup() {
     steppers[i].setAcceleration(100.0);
   }
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object
+
+  // Initialize solenoid to close
+  pinMode(valve_pin,OUTPUT);
+  digitalWrite(valve_pin,sol_pos);
   
   // Create interrupt service routines for limit switches
   pinMode(LIMIT_PINX, INPUT_PULLUP);
@@ -119,8 +128,9 @@ void loop() {
     ypos = data.substring(3,6).toInt();
     zpos = data.substring(6,9).toInt();
     tool_pos = data.substring(9,12).toInt();
+    sol_pos = data.substring(12,13).toInt();
     char msg[50];
-    sprintf(msg,"X = %d\nY = %d\nZ = %d\nTool = %d",xpos,ypos,zpos,tool_pos);
+    sprintf(msg,"X = %d\nY = %d\nZ = %d\nTool = %d\nSolenoid = %d",xpos,ypos,zpos,tool_pos,sol_pos);
     Serial.println(msg);
   }
 
@@ -128,6 +138,7 @@ void loop() {
   if (zeroed[1]) {
     setPosition(xpos,ypos,zpos);
     myservo.write(tool_pos);
+    digitalWrite(valve_pin,sol_pos);
   }
   else {
     zeroMotors();
@@ -138,14 +149,17 @@ void loop() {
 /*
  * Function driveMotors(x,y,z)
  *  Drives motors to a position x,y,z
+ *  v is the speed in revolutions per second
  */
-void driveMotors(double x, double y, double z) {
-  steppers[0].moveTo(x*stepsPerRev/distancePerRev);
-  steppers[1].moveTo(y*stepsPerRev/distancePerRev);
-  steppers[2].moveTo(z*stepsPerRev/distancePerRev);
+void driveMotors(double x, double y, double z, double v) {
+  // A negative input moves the gantry up
+  // A positive input moves the gantry down
+  steppers[0].moveTo(-x*stepsPerRev/distancePerRev);
+  steppers[1].moveTo(-y*stepsPerRev/distancePerRev);
+  steppers[2].moveTo(-z*stepsPerRev/distancePerRev);
   
   for (int i=0;i<sizeof(steppers)/sizeof(AccelStepper);i++) {
-    steppers[i].setSpeed(200);
+    steppers[i].setSpeed(stepsPerRev*v);
     steppers[i].runSpeedToPosition();
   }
 }
@@ -156,7 +170,8 @@ void driveMotors(double x, double y, double z) {
  */
 void setPosition(double x, double y, double z) {
   if (!flags[0] && !flags[1] && !flags[2]) {
-    driveMotors(x,y,z);
+    const byte rps = 1; // Set rotations per second
+    driveMotors(x,y,z,rps);
   }
   else {
     for (int i=1;i<sizeof(flags)/sizeof(flags[0]);i++) {
@@ -176,7 +191,7 @@ void setPosition(double x, double y, double z) {
  */
 void zeroMotors() {
   if (!flags[0] && !flags[1] && !flags[2]) {
-    driveMotors(xpos,ypos,zpos);
+    driveMotors(xpos,ypos,zpos,0.5);
   }
   else {
     for (int i=1;i<sizeof(flags)/sizeof(flags[0]);i++) {
@@ -189,11 +204,11 @@ void zeroMotors() {
       }
     }
   }
-  if (!zeroed[0]) { xpos = 1000; }
+  if (!zeroed[0]) { xpos = -1000; }
   else { xpos = 0; }
-  if (!zeroed[1]) { ypos = 1000; }
+  if (!zeroed[1]) { ypos = -1000; }
   else { ypos = 0; }
-  if (!zeroed[2]) { zpos = 1000; }
+  if (!zeroed[2]) { zpos = -1000; }
   else { zpos = 0; }
 }
 
@@ -205,7 +220,14 @@ void serialEvent() {
   // If a message from the Raspberry Pi is present, read the data
   if (Serial.available() > 0) {
     data = Serial.readString();
-    DataRead = true;
+    if (data.equals("zero")) {
+      zeroed[0] = false;
+      zeroed[1] = false;
+      zeroed[2] = false;
+    }
+    else {
+      DataRead = true;
+    }
   }
   // Reset the serial buffer
   Serial.flush();

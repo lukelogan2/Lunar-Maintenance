@@ -8,6 +8,13 @@ try:
 except:
     print("Failed Serial")
 
+# Create global variables to store the current position of the gantry
+xcur = 0
+ycur = 0
+zcur = 0
+ccur = 0
+scur = 0
+
 ########################################################
 # Read Serial Input from Arduino
 ########################################################
@@ -38,9 +45,31 @@ print('Serial Connection Succeeded')
 #   y = vertical position in mm (up is positive, down is negative)
 #   z = inward position to move the tool in mm (forward is positive, backward is negative)
 #   c = tool position in degrees (0 degrees is open, 100 degrees is closed, 180 degrees is tightly closed)
+#   s = solenoid valve position (0 = open, 1 = closed)
 ########################################################
-def setPosition(x,y,z,c):
-    message = "{:03d}{:03d}{:03d}{:03d}".format(x,y,z,c)
+def setPosition(x,y,z,c,s):
+    message = "{:03d}{:03d}{:03d}{:03d}{:01d}".format(x,y,z,c,s)
+    sendSerial(message)
+    '''
+    global xcur, ycur, zcur, scur, ccur
+    # Move to a position one direction at a time
+    message = "{:03d}{:03d}{:03d}{:03d}{:01d}".format(xcur,y,zcur,ccur,scur)
+    sendSerial(message)
+    message = "{:03d}{:03d}{:03d}{:03d}{:01d}".format(x, y, zcur, ccur, scur)
+    sendSerial(message)
+    message = "{:03d}{:03d}{:03d}{:03d}{:01d}".format(x, y, z, ccur, scur)
+    sendSerial(message)
+    message = "{:03d}{:03d}{:03d}{:03d}{:01d}".format(x, y, z, c, s)
+    sendSerial(message)
+    # Update current positions
+    xcur = x
+    ycur = y
+    zcur = z
+    ccur = c
+    scur = s
+    '''
+def zeroMotors():
+    message = "zero"
     sendSerial(message)
 
 def open_tool():
@@ -62,14 +91,20 @@ def close_tool():
 #open_tool()
 #close_tool()
 
+zero = input("Zero Motors? (y/n)")
+if zero == "y":
+    zeroMotors()
 while True:
     print("Set coordinate and tool position of the gantry:\n")
     x = int(input("X = \n"))
     y = int(input("Y = \n"))
     z = int(input("Z = \n"))
-    c = int(input("Claw position (0 = open, 100 = closed, 180 = tightly closed):\n"))
-    setPosition(x,y,z,c)
-    sleep(3)
+    #c = int(input("Claw position (0 = open, 100 = closed, 180 = tightly closed):\n"))
+    #s = int(input("Solenoid position (0=open, 1=closed)"))
+    c = 0
+    s = 0
+    setPosition(x,y,z,c,s)
+    #sleep(3)
     readSerial()
 
 arduino.close()
