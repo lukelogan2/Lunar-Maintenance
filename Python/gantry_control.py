@@ -48,7 +48,7 @@ print('Serial Connection Succeeded')
 #   s = solenoid valve position (0 = open, 1 = closed)
 ########################################################
 def setPosition(x,y,z,c,s):
-    message = "{:03d}{:03d}{:03d}{:03d}{:01d}".format(x,y,z,c,s)
+    message = "{:06d}{:06d}{:06d}{:06d}{:01d}".format(x,y,z,c,s)
     sendSerial(message)
     '''
     global xcur, ycur, zcur, scur, ccur
@@ -57,12 +57,12 @@ def setPosition(x,y,z,c,s):
     sendSerial(message)
     message = "{:03d}{:03d}{:03d}{:03d}{:01d}".format(x, y, zcur, ccur, scur)
     sendSerial(message)
-    message = "{:03d}{:03d}{:03d}{:03d}{:01d}".format(x, y, z, ccur, scur)
+    mess0age = "{:03d}{:03d}{:03d}{:03d}{:01d}".format(x, y, z, ccur, scur)
     sendSerial(message)
     message = "{:03d}{:03d}{:03d}{:03d}{:01d}".format(x, y, z, c, s)
     sendSerial(message)
     # Update current positions
-    xcur = x
+    xcur = x0
     ycur = y
     zcur = z
     ccur = c
@@ -99,10 +99,8 @@ while True:
     x = int(input("X = \n"))
     y = int(input("Y = \n"))
     z = int(input("Z = \n"))
-    #c = int(input("Claw position (0 = open, 100 = closed, 180 = tightly closed):\n"))
-    #s = int(input("Solenoid position (0=open, 1=closed)"))
-    c = 0
-    s = 0
+    c = int(input("Claw position (0 = open, 100 = closed, 180 = tightly closed):\n"))
+    s = int(input("Solenoid position (0=open, 1=closed)"))
     setPosition(x,y,z,c,s)
     #sleep(3)
     readSerial()

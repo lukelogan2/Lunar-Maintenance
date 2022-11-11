@@ -113,9 +113,9 @@ void setup() {
   pinMode(LIMIT_PINX, INPUT_PULLUP);
   pinMode(LIMIT_PINY, INPUT_PULLUP);
   pinMode(LIMIT_PINZ, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(LIMIT_PINX), limit_switchX, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(LIMIT_PINY), limit_switchY, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(LIMIT_PINZ), limit_switchZ, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(LIMIT_PINX), limit_switchX, RISING);
+  attachInterrupt(digitalPinToInterrupt(LIMIT_PINY), limit_switchY, RISING);
+  attachInterrupt(digitalPinToInterrupt(LIMIT_PINZ), limit_switchZ, RISING);
   
   Serial.begin(115200);
 }
@@ -124,16 +124,15 @@ void loop() {
   // Read position from Python driver program
   if (DataRead) {
     DataRead = false;
-    xpos = data.substring(0,3).toInt();
-    ypos = data.substring(3,6).toInt();
-    zpos = data.substring(6,9).toInt();
-    tool_pos = data.substring(9,12).toInt();
-    sol_pos = data.substring(12,13).toInt();
+    xpos = data.substring(0,6).toInt();
+    ypos = data.substring(6,12).toInt();
+    zpos = data.substring(12,18).toInt();
+    tool_pos = data.substring(18,24).toInt();
+    sol_pos = data.substring(24,25).toInt();
     char msg[50];
     sprintf(msg,"X = %d\nY = %d\nZ = %d\nTool = %d\nSolenoid = %d",xpos,ypos,zpos,tool_pos,sol_pos);
     Serial.println(msg);
   }
-
   //if (zeroed[0] && zeroed[1] && zeroed[2]) {
   if (zeroed[1]) {
     setPosition(xpos,ypos,zpos);
@@ -237,11 +236,11 @@ void serialEvent() {
  * Interrupt Service Routines for limit switches
  */
 void limit_switchX() {
-  flags[0] = digitalRead(LIMIT_PINX);
+  //flags[0] = digitalRead(LIMIT_PINX);
 }
 void limit_switchY() {
-  flags[1] = digitalRead(LIMIT_PINY);
+  //flags[1] = digitalRead(LIMIT_PINY);
 }
 void limit_switchZ() {
-  flags[2] = digitalRead(LIMIT_PINZ);
+  //flags[2] = digitalRead(LIMIT_PINZ);
 }
