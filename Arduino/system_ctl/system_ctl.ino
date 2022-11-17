@@ -7,17 +7,29 @@
 #include <Servo.h>
 
 // X-axis stepper
-const int PUL_PINX = 2; // Yellow
-const int DIR_PINX = 3; // Green
+const int PUL_PINX = 4; // Yellow
+const int DIR_PINX = 5; // Green
 const int ENA_PINX = 22; // Blue
 // Y-axis stepper
-const int PUL_PINY = 4; // Yellow
-const int DIR_PINY = 5; // Green
+const int PUL_PINY = 6; // Yellow
+const int DIR_PINY = 7; // Green
 const int ENA_PINY = 24; // Blue
 // Z-axis stepper
-const int PUL_PINZ = 6; // Yellow
-const int DIR_PINZ = 7; // Green
+const int PUL_PINZ = 8; // Yellow
+const int DIR_PINZ = 9; // Green
 const int ENA_PINZ = 26; // Blue
+// Servo Motor Tool
+const int TOOL_PIN = 10;
+// Pins for limit switch interrupts
+const byte LIMIT_PIN_XMIN = 2;
+const byte LIMIT_PIN_YMIN = 3;
+const byte LIMIT_PIN_ZMIN = 18;
+const byte LIMIT_PIN_XMAX = 19;
+const byte LIMIT_PIN_YMAX = 20;
+const byte LIMIT_PIN_ZMAX = 21;
+// Solenoid Pin
+const byte valve_pin = 50;
+byte sol_pos = 0;
 
 // Define stepper motor connections and motor interface type. Motor interface type must be set to 1 when using a driver:
 const int motorInterfaceType = 1;
@@ -32,7 +44,7 @@ AccelStepper steppers[] = {
 Servo myservo;  // create servo object to control a servo
 
 int stepsPerRev = 200;  // steps per revolution
-int distancePerRev = 8; // 2 mm per revolution
+int distancePerRev = 8; // 8 mm per revolution
 String data;            // Data input from python
 bool DataRead = false;
 
@@ -75,17 +87,8 @@ pinInit_t enaPins[] = {
   {ENA_PINZ, LOW}
 };
 
-// Solenoid Pin
-const byte valve_pin = 50;
-byte sol_pos = 0;
-
-// Pins for limit switch interrupts
-const byte LIMIT_PINX = 18;
-const byte LIMIT_PINY = 19;
-const byte LIMIT_PINZ = 20;
-
 // Limit switch flags X,Y,Z
-bool flags[] = {false,false,false};
+bool flags[] = {false,false,false,false,false,false};
 
 // Zeroing Variables for X,Y,Z
 //bool zeroed[] = {false,false,false};
@@ -103,19 +106,25 @@ void setup() {
     steppers[i].setMaxSpeed(1000.0);
     steppers[i].setAcceleration(100.0);
   }
-  myservo.attach(9);  // attaches the servo on pin 9 to the servo object
+  myservo.attach(TOOL_PIN);  // attaches the servo on pin 9 to the servo object
 
   // Initialize solenoid to close
   pinMode(valve_pin,OUTPUT);
   digitalWrite(valve_pin,sol_pos);
   
   // Create interrupt service routines for limit switches
-  pinMode(LIMIT_PINX, INPUT_PULLUP);
-  pinMode(LIMIT_PINY, INPUT_PULLUP);
-  pinMode(LIMIT_PINZ, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(LIMIT_PINX), limit_switchX, RISING);
-  attachInterrupt(digitalPinToInterrupt(LIMIT_PINY), limit_switchY, RISING);
-  attachInterrupt(digitalPinToInterrupt(LIMIT_PINZ), limit_switchZ, RISING);
+  pinMode(LIMIT_PIN_XMIN, INPUT_PULLUP);
+  pinMode(LIMIT_PIN_XMAX, INPUT_PULLUP);
+  pinMode(LIMIT_PIN_YMIN, INPUT_PULLUP);
+  pinMode(LIMIT_PIN_YMAX, INPUT_PULLUP);
+  pinMode(LIMIT_PIN_ZMIN, INPUT_PULLUP);
+  pinMode(LIMIT_PIN_ZMAX, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(LIMIT_PIN_XMIN), limit_xmin, RISING);
+  attachInterrupt(digitalPinToInterrupt(LIMIT_PIN_XMAX), limit_xmax, RISING);
+  attachInterrupt(digitalPinToInterrupt(LIMIT_PIN_YMIN), limit_ymin, RISING);
+  attachInterrupt(digitalPinToInterrupt(LIMIT_PIN_YMAX), limit_ymax, RISING);
+  attachInterrupt(digitalPinToInterrupt(LIMIT_PIN_ZMIN), limit_zmin, RISING);
+  attachInterrupt(digitalPinToInterrupt(LIMIT_PIN_ZMAX), limit_zmax, RISING);
   
   Serial.begin(115200);
 }
@@ -131,10 +140,10 @@ void loop() {
     sol_pos = data.substring(24,25).toInt();
     char msg[50];
     sprintf(msg,"X = %d\nY = %d\nZ = %d\nTool = %d\nSolenoid = %d",xpos,ypos,zpos,tool_pos,sol_pos);
-    Serial.println(msg);
+    //Serial.println(msg);
   }
-  //if (zeroed[0] && zeroed[1] && zeroed[2]) {
-  if (zeroed[1]) {
+  if (zeroed[0] && zeroed[1] && zeroed[2]) {
+  //if (zeroed[1]) {
     setPosition(xpos,ypos,zpos);
     myservo.write(tool_pos);
     digitalWrite(valve_pin,sol_pos);
@@ -153,9 +162,9 @@ void loop() {
 void driveMotors(double x, double y, double z, double v) {
   // A negative input moves the gantry up
   // A positive input moves the gantry down
-  steppers[0].moveTo(-x*stepsPerRev/distancePerRev);
+  steppers[0].moveTo(x*stepsPerRev/distancePerRev);
   steppers[1].moveTo(-y*stepsPerRev/distancePerRev);
-  steppers[2].moveTo(-z*stepsPerRev/distancePerRev);
+  steppers[2].moveTo(z*stepsPerRev/distancePerRev);
   
   for (int i=0;i<sizeof(steppers)/sizeof(AccelStepper);i++) {
     steppers[i].setSpeed(stepsPerRev*v);
@@ -168,16 +177,56 @@ void driveMotors(double x, double y, double z, double v) {
  * (x,y,z) in mm
  */
 void setPosition(double x, double y, double z) {
-  if (!flags[0] && !flags[1] && !flags[2]) {
+  bool stopFlag = false;
+  for (int i=0; i<sizeof(flags)/sizeof(flags[0]);i++) {
+    if (flags[i] == true) {
+      stopFlag = true;
+    }
+  }
+  if (stopFlag == false) {
     const byte rps = 1; // Set rotations per second
     driveMotors(x,y,z,rps);
   }
   else {
-    for (int i=1;i<sizeof(flags)/sizeof(flags[0]);i++) {
+    for (int i=0;i<sizeof(flags)/sizeof(flags[0]);i++) {
       if (flags[i] == true) {
-        digitalWrite(enaPins[i].pinNum,HIGH);
-        steppers[i].setCurrentPosition(steppers[i].targetPosition());
+        byte motor = -1;
+        byte backoff = 0;
+        switch (i) {
+          case 0:
+            motor = 0;
+            backoff = 5*stepsPerRev/distancePerRev;
+          break;
+          case 1:
+            motor = 1;
+            backoff = 5*stepsPerRev/distancePerRev;
+          break;
+          case 2:
+            motor = 2;
+            backoff = 5*stepsPerRev/distancePerRev;
+          break;
+          case 3:
+            motor = 0;
+            backoff = -5*stepsPerRev/distancePerRev;
+          break;
+          case 4:
+            motor = 1;
+            backoff = -5*stepsPerRev/distancePerRev;
+          break;
+          case 5:
+            motor = 2;
+            backoff = -5*stepsPerRev/distancePerRev;
+          break;
+          default:
+            // None
+          break;
+        }
+        //digitalWrite(enaPins[i].pinNum,HIGH);
+        steppers[motor].setCurrentPosition(steppers[motor].targetPosition());
         flags[i] = false;
+        char msg[50];
+        sprintf(msg,"Limit Switch %d has triggered",i);
+        Serial.println(msg);
       }
     }
   }
@@ -189,17 +238,23 @@ void setPosition(double x, double y, double z) {
  *    then set the zero positions for each motor
  */
 void zeroMotors() {
-  if (!flags[0] && !flags[1] && !flags[2]) {
+  bool stopFlag = false;
+  for (int i=0; i<sizeof(flags)/sizeof(flags[0]);i++) {
+    if (flags[i] == true) {
+      stopFlag = true;
+    }
+  }
+  if (stopFlag == false) {
     driveMotors(xpos,ypos,zpos,0.5);
   }
   else {
-    for (int i=1;i<sizeof(flags)/sizeof(flags[0]);i++) {
+    for (int i=0;i<sizeof(flags)/sizeof(flags[0]);i++) {
       if (flags[i] == true) {
         digitalWrite(enaPins[i].pinNum,HIGH);
         zeroPosition[i] = steppers[i].currentPosition();
         steppers[i].setCurrentPosition(0);
         flags[i] = false;
-        zeroed[i] = true;
+        zeroed[i%3] = true;
       }
     }
   }
@@ -235,12 +290,21 @@ void serialEvent() {
 /*
  * Interrupt Service Routines for limit switches
  */
-void limit_switchX() {
-  //flags[0] = digitalRead(LIMIT_PINX);
+void limit_xmin() {
+  flags[0] = digitalRead(LIMIT_PIN_XMIN);
 }
-void limit_switchY() {
-  //flags[1] = digitalRead(LIMIT_PINY);
+void limit_ymin() {
+  flags[1] = digitalRead(LIMIT_PIN_YMIN);
 }
-void limit_switchZ() {
-  //flags[2] = digitalRead(LIMIT_PINZ);
+void limit_zmin() {
+  flags[2] = digitalRead(LIMIT_PIN_ZMIN);
+}
+void limit_xmax() {
+  flags[3] = digitalRead(LIMIT_PIN_XMAX);
+}
+void limit_ymax() {
+  flags[4] = digitalRead(LIMIT_PIN_YMAX);
+}
+void limit_zmax() {
+  flags[5] = digitalRead(LIMIT_PIN_ZMAX);
 }

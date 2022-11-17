@@ -8,6 +8,13 @@ try:
 except:
     print("Failed Serial")
 
+# Create global variables to store the current position of the gantry
+xcur = 0
+ycur = 0
+zcur = 0
+ccur = 0
+scur = 0
+
 ########################################################
 # Read Serial Input from Arduino
 ########################################################
@@ -43,7 +50,24 @@ print('Serial Connection Succeeded')
 def setPosition(x,y,z,c,s):
     message = "{:06d}{:06d}{:06d}{:06d}{:01d}".format(x,y,z,c,s)
     sendSerial(message)
-
+    '''
+    global xcur, ycur, zcur, scur, ccur
+    # Move to a position one direction at a time
+    message = "{:03d}{:03d}{:03d}{:03d}{:01d}".format(xcur,y,zcur,ccur,scur)
+    sendSerial(message)
+    message = "{:03d}{:03d}{:03d}{:03d}{:01d}".format(x, y, zcur, ccur, scur)
+    sendSerial(message)
+    mess0age = "{:03d}{:03d}{:03d}{:03d}{:01d}".format(x, y, z, ccur, scur)
+    sendSerial(message)
+    message = "{:03d}{:03d}{:03d}{:03d}{:01d}".format(x, y, z, c, s)
+    sendSerial(message)
+    # Update current positions
+    xcur = x0
+    ycur = y
+    zcur = z
+    ccur = c
+    scur = s
+    '''
 def zeroMotors():
     message = "zero"
     sendSerial(message)
@@ -78,6 +102,7 @@ while True:
     c = int(input("Claw position (0 = open, 100 = closed, 180 = tightly closed):\n"))
     s = int(input("Solenoid position (0=open, 1=closed)"))
     setPosition(x,y,z,c,s)
+    #sleep(3)
     readSerial()
 
 arduino.close()
