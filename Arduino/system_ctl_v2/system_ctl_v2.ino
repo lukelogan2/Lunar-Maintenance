@@ -105,7 +105,7 @@ int backoff[] = {
   -5*stepsPerRev/distancePerRev, // Ymax
   3*stepsPerRev/distancePerRev  // Zmax
 };
-byte motor_zeroing = 1; // Initialize Y-axis to first motor zeroing
+byte motor_zeroing = 0; // Initialize Z-axis to first motor zeroing
 
 void setup() {
   // Set the output of each motor pin to LOW
@@ -156,14 +156,20 @@ void loop() {
       //Serial.println(msg);
     }
     if (zeroed[0] && zeroed[1] && zeroed[2]) {
-      //noInterrupts();
-      setPosition(xpos,ypos,zpos);
-      myservo.write(tool_pos);
-      digitalWrite(valve_pin,sol_pos);
-      //driveMotors(10,10,10,0.5);
+        setPosition(xpos,ypos,zpos);
+        myservo.write(tool_pos);
+        digitalWrite(valve_pin,sol_pos);
     }
     else {
-      zeroMotors();
+      if (!zeroed[2]) {
+        zeroZ();
+      }
+      else if (!zeroed[0]) {
+        zeroX();
+      }
+      else if (!zeroed[1]) {
+        zeroY();
+      }
     }
   }
 }
@@ -244,91 +250,70 @@ void setPosition(double x, double y, double z) {
   }
 }
 
-/*
- * zeroMotors() Function
- *    Drive motors until they hit limit switches, 
- *    then set the zero positions for each motor
- */
-void zeroMotors() {
-  bool stopFlag = false;
-  for (int i=0; i<sizeof(flags)/sizeof(flags[0]);i++) {
-    if (flags[i] == true) {
-      stopFlag = true;
-    }
-  }
-  if (stopFlag == false) {
+
+void zeroX() {
+  byte motor = 0;
+  if (flags[motor] == false) {
     driveMotors(xpos,ypos,zpos,0.5);
   }
   else {
-    for (int i=0;i<sizeof(flags)/sizeof(flags[0]);i++) {
-      if (flags[i] == true) {
-        //digitalWrite(enaPins[i].pinNum,HIGH);
-        byte motor = -1;
-        switch (i) {
-          case 0:
-            motor = 0; // Xmin
-          break;
-          case 1:
-            motor = 1; // Ymin
-          break;
-          case 2:
-            motor = 2; // Zmin
-          break;
-          case 3: // Xmax
-            motor = 0;
-          break;
-          case 4: // Ymax
-            motor = 1;
-          break;
-          case 5: // Zmax
-            motor = 2;
-          break;
-          default:
-            // None
-          break;
-        }
-        steppers[motor].setCurrentPosition(steppers[motor].targetPosition());
-        zeroed[motor] = true;
-        flags[i] = false;
-      }
-    }
+    steppers[motor].setCurrentPosition(steppers[motor].targetPosition());
+    zeroed[motor] = true;
+    flags[motor] = false;
   }
   // X-axis zeroing
-  if (!zeroed[0] && zeroed[2]) { 
-  //if (!zeroed[0]) {
+  if (!zeroed[motor]) { 
     xpos = -1000; 
-    motor_zeroing = 0;
   }
-  else if (zeroed[0] && zeroed[2]) { 
-  //else if (zeroed[0]) {
+  else { 
     xpos = 0; 
-    steppers[0].setCurrentPosition(0);
+    steppers[motor].setCurrentPosition(0);
     Serial.println("zeroX");
   }
-  // Y-axis zeroing
-  if (!zeroed[1] && zeroed[2] && zeroed[0]) { 
-  //if (!zeroed[1]) {
-    ypos = -1000; 
-    motor_zeroing = 1;
+}
+
+void zeroY() {
+  byte motor = 1;
+  if (flags[motor] == false) {
+    driveMotors(xpos,ypos,zpos,0.5);
   }
-  else if (zeroed[0] && zeroed[1] && zeroed[2]) { 
-  //else if (zeroed[1]) {
+  else {
+    steppers[motor].setCurrentPosition(steppers[motor].targetPosition());
+    zeroed[motor] = true;
+    flags[motor] = false;
+  }
+  // Y-axis zeroing
+  if (!zeroed[motor]) { 
+    ypos = -1000; 
+  }
+  else { 
     ypos = 0; 
-    steppers[1].setCurrentPosition(0);
+    steppers[motor].setCurrentPosition(0);
     Serial.println("zeroY");
-    //Serial.println("zeroed");
+  }
+}
+
+void zeroZ() {
+  byte motor = 2;
+  if (flags[motor] == false) {
+    driveMotors(xpos,ypos,zpos,0.5);
+  }
+  else {
+    steppers[motor].setCurrentPosition(steppers[motor].targetPosition());
+    zeroed[motor] = true;
+    flags[motor] = false;
   }
   // Z-axis zeroing
-  if (!zeroed[2]) { 
+  if (!zeroed[motor]) { 
     zpos = -1000; 
-    motor_zeroing = 2; 
   }
-  else if (zeroed[2]){ 
+  else { 
     zpos = 0; 
-    steppers[2].setCurrentPosition(0);
+    steppers[motor].setCurrentPosition(0);
     Serial.println("zeroZ");
   }
 }
+
 
 /*
  * Serial Communication Handler
@@ -342,6 +327,9 @@ void serialEvent() {
       zeroed[0] = false;
       zeroed[1] = false;
       zeroed[2] = false;
+      flags[0] = false;
+      flags[1] = false;
+      flags[2] = false;
       allZeroed = false;
       startFlag = true;
     }

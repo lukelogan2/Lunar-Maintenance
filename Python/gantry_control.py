@@ -2,6 +2,8 @@
 import serial
 from time import sleep
 
+
+
 try:
     arduino = serial.Serial(port='COM7', baudrate=115200)
     sleep(3)
@@ -16,8 +18,10 @@ def readSerial():
         try:
             line = arduino.readline().decode('utf-8').rstrip()
             print("serial output : ", line)
+            return(line)
         except:
             print("Communication Error")
+            return("-1")
 
 ########################################################
 # Write Serial Data to Arduino
@@ -44,10 +48,6 @@ def setPosition(x,y,z,c,s):
     message = "{:06d}{:06d}{:06d}{:06d}{:01d}".format(x,y,z,c,s)
     sendSerial(message)
 
-def zeroMotors():
-    message = "zero"
-    sendSerial(message)
-
 def open_tool():
     pos = 180
     while pos >= 0:
@@ -69,15 +69,37 @@ def close_tool():
 
 zero = input("Zero Motors? (y/n)")
 if zero == "y":
-    zeroMotors()
+    message = "zero"
+    sendSerial(message)
+    # Wait for the motor to zero
+    zeroed = False
+    while zeroed == False:
+        msg = readSerial()
+        if msg == "zeroX":
+            zeroed = True
+            print(msg)
+        if msg == "zeroY":
+            zeroed = True
+            print(msg)
+        if msg == "zeroZ":
+            zeroed = True
+            print(msg)
+        if msg == "zeroed":
+            zeroed = True
+            print(msg)
+else:
+    message = "nozero"
+    sendSerial(message)
+
 while True:
     print("Set coordinate and tool position of the gantry:\n")
     x = int(input("X = \n"))
     y = int(input("Y = \n"))
     z = int(input("Z = \n"))
     c = int(input("Claw position (0 = open, 100 = closed, 180 = tightly closed):\n"))
-    s = int(input("Solenoid position (0=open, 1=closed)"))
+    #s = int(input("Solenoid position (0=open, 1=closed)"))
+    s = 0
     setPosition(x,y,z,c,s)
-    readSerial()
+    #readSerial()
 
 arduino.close()
