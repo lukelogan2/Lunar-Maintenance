@@ -15,6 +15,11 @@ try:
 except:
     print("Failed Serial")
 
+xcur = 0
+ycur = 0
+zcur = 0
+ccur = 0
+scur = 0
 ########################################################
 # Read Serial Input from Arduino
 ########################################################
@@ -200,6 +205,5 @@ elif (control == "a"):
     zeroRoutine("auto")
     removeSolenoid()
     runProgram()
-#runProgram()
 
 arduino.close()
