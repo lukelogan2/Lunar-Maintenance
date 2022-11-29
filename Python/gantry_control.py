@@ -118,7 +118,7 @@ def close_tool():
 #   "auto" = automated control
 ########################################################
 def zeroRoutine(ctl):
-    if ctl == "man":
+    if ctl == "manual":
         zero = input("Zero Motors? (y/n)")
     else:
         zero = "y"
