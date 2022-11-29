@@ -93,6 +93,7 @@ bool flags[] = {false,false,false,false,false,false};
 // Zeroing Variables for X,Y,Z
 //bool zeroed[] = {false,false,false};
 bool startFlag = false; // Wait until the user makes a decision to zero
+bool userInput = false; // Determine if the user has input a position
 bool zeroed[] = {true,true,true}; // Wait for the python code to initialize zeroing
 bool allZeroed = true;
 long zeroPosition[] {0,0,0};
@@ -119,7 +120,8 @@ void setup() {
     steppers[i].setAcceleration(100.0);
   }
   myservo.attach(TOOL_PIN);  // attaches the servo on pin 9 to the servo object
-
+  myservo.write(tool_pos);
+  
   // Initialize solenoid to close
   pinMode(valve_pin,OUTPUT);
   digitalWrite(valve_pin,sol_pos);
@@ -145,14 +147,15 @@ void loop() {
   if (startFlag) {
     // Read position from Python driver program
     if (DataRead) {
+      userInput = true;
       DataRead = false;
       xpos = data.substring(0,6).toInt();
       ypos = data.substring(6,12).toInt();
       zpos = data.substring(12,18).toInt();
       tool_pos = data.substring(18,24).toInt();
       sol_pos = data.substring(24,25).toInt();
-      char msg[50];
-      sprintf(msg,"X = %d\nY = %d\nZ = %d\nTool = %d\nSolenoid = %d",xpos,ypos,zpos,tool_pos,sol_pos);
+      //char msg[50];
+      //sprintf(msg,"X = %d\nY = %d\nZ = %d\nTool = %d\nSolenoid = %d",xpos,ypos,zpos,tool_pos,sol_pos);
       //Serial.println(msg);
     }
     if (zeroed[0] && zeroed[1] && zeroed[2]) {
@@ -194,6 +197,13 @@ void driveMotors(double x, double y, double z, double v) {
       steppers[i].setSpeed(stepsPerRev*v);
     }
     steppers[i].runSpeedToPosition();
+  }
+  // Send to the Arduino the motion is complete
+  if (steppers[0].currentPosition() == steppers[0].targetPosition() && steppers[1].currentPosition() == steppers[1].targetPosition() && steppers[2].currentPosition() == steppers[2].targetPosition()) {
+    if (userInput) {
+      userInput = false;
+      Serial.println("done");
+    }
   }
 }
 
@@ -242,9 +252,9 @@ void setPosition(double x, double y, double z) {
         //digitalWrite(enaPins[i].pinNum,HIGH);
         steppers[motor].setCurrentPosition(steppers[motor].targetPosition());
         flags[i] = false;
-        char msg[50];
-        sprintf(msg,"Limit Switch %d has triggered",i);
-        Serial.println(msg);
+        //char msg[50];
+        //sprintf(msg,"Limit Switch %d has triggered",i);
+        //Serial.println(msg);
       }
     }
   }
