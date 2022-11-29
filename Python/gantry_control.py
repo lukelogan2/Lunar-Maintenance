@@ -5,11 +5,16 @@ from time import sleep
 
 
 try:
-    arduino = serial.Serial(port='COM7', baudrate=115200)
+    arduino = serial.Serial(port='COM3', baudrate=115200)
     sleep(3)
 except:
     print("Failed Serial")
 
+xcur = 0
+ycur = 0
+zcur = 0
+ccur = 0
+scur = 0
 ########################################################
 # Read Serial Input from Arduino
 ########################################################
@@ -96,6 +101,8 @@ else:
 #############################################################################################
 while True:
     print("Set coordinate and tool position of the gantry:\n")
+    print("X: %d; Y: %d; Z: %d; C: %d; S: %d;" % (xcur, ycur, zcur, ccur, scur))
+
     x = -1
     while (type(x) != int or x < 0):
         try:
@@ -137,6 +144,11 @@ while True:
         except:
             print("Solenoid position must be an integer")
     setPosition(x,y,z,c,s)
+    xcur = x
+    ycur = y
+    zcur = z
+    ccur = c
+    scur = s
     #readSerial()
 
 arduino.close()
