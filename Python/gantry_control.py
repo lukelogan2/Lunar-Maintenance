@@ -4,7 +4,7 @@ from time import sleep
 
 global stowPos, solPos, clampAngle, zeroOption
 solPos = (85, 279, 27)
-stowPos = (336,274,27)
+stowPos = (336, 274, 27)
 clampClosed = 85
 clampOpen = 0
 
