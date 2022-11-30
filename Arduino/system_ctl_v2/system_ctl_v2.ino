@@ -219,7 +219,7 @@ void setPosition(double x, double y, double z) {
     }
   }
   if (stopFlag == false) {
-    const byte rps = 1; // Set rotations per second
+    const byte rps = 2; // Set rotations per second
     driveMotors(x,y,z,rps);
   }
   else {

@@ -2,9 +2,9 @@
 import serial
 from time import sleep
 
-global stowPos, solPos, clampAngle
-stowPos = (82, 278, 27)
-solPos = (332,274,27)
+global stowPos, solPos, clampAngle, zeroOption
+solPos = (85, 279, 27)
+stowPos = (336,274,27)
 clampClosed = 85
 clampOpen = 0
 
@@ -69,27 +69,27 @@ def setPositionBlocking(x,y,z,c,s):
             doneFlag = True
 
 ########################################################################
-## Remove the solenoid and place it in the stow location
+## Remove the stow solenoid and place it in the system location
 ########################################################################
-def removeSolenoid():
+def replaceSolenoid():
     global stowPos, solPos, clampClosed, clampOpen
-    setPositionBlocking(solPos[0], solPos[1], 0, clampOpen, 0)  # Move in front of the solenoid
+    setPositionBlocking(stowPos[0], stowPos[1], 0, clampOpen, 0)  # Move in front of the solenoid
     sleep(3)
-    setPositionBlocking(solPos[0], solPos[1], solPos[2], clampOpen, 0)  # The tool is in position
+    setPositionBlocking(stowPos[0], stowPos[1], stowPos[2], clampOpen, 0)  # The tool is in position
     sleep(3)
-    setPositionBlocking(solPos[0], solPos[1], solPos[2], clampClosed, 0)  # Clamp down on the solenoid
+    setPositionBlocking(stowPos[0], stowPos[1], stowPos[2], clampClosed, 0)  # Clamp down on the solenoid
     sleep(3)
-    setPositionBlocking(solPos[0], solPos[1], 10, clampClosed, 0)  # Move the solenoid out
+    setPositionBlocking(stowPos[0], stowPos[1], 10, clampClosed, 0)  # Move the solenoid out
     sleep(3)
-    setPositionBlocking(stowPos[0], stowPos[1], 10, clampClosed, 0)  # Move to the X, Y position of the stow location
+    setPositionBlocking(solPos[0], solPos[1], 10, clampClosed, 0)  # Move to the X, Y position of the stow location
     sleep(3)
-    setPositionBlocking(stowPos[0], stowPos[1], 17, clampClosed, 0)  # Move the Z-axis tool closer
+    setPositionBlocking(solPos[0], solPos[1], 17, clampClosed, 0)  # Move the Z-axis tool closer
     sleep(3)
-    setPositionBlocking(stowPos[0], stowPos[1], 22, clampClosed, 0)  # Move the Z-axis tool closer
+    setPositionBlocking(solPos[0], solPos[1], 22, clampClosed, 0)  # Move the Z-axis tool closer
     sleep(3)
-    setPositionBlocking(stowPos[0], stowPos[1], stowPos[2], clampClosed, 0)  # The tool is in position
+    setPositionBlocking(solPos[0], solPos[1], solPos[2], clampClosed, 0)  # The tool is in position
     sleep(3)
-    setPositionBlocking(stowPos[0], stowPos[1], stowPos[2], clampOpen, 0)  # Open the clamp
+    setPositionBlocking(solPos[0], solPos[1], solPos[2], clampOpen, 0)  # Open the clamp
     sleep(3)
     setPositionBlocking(stowPos[0], stowPos[1], 10, clampOpen, 0)  # Move the Z-axis tool out
     sleep(3)
@@ -118,11 +118,13 @@ def close_tool():
 #   "auto" = automated control
 ########################################################
 def zeroRoutine(ctl):
+    global zeroOption
     if ctl == "manual":
         zero = input("Zero Motors? (y/n)")
     else:
         zero = "y"
     if zero == "y":
+        zeroOption = True
         message = "zero"
         sendSerial(message)
         # Wait for the motor to zero
@@ -141,6 +143,7 @@ def zeroRoutine(ctl):
                 zeroZ = True
                 print(msg)
     else:
+        zeroOption = False
         message = "nozero"
         sendSerial(message)
 
@@ -148,29 +151,30 @@ def zeroRoutine(ctl):
 # Let the user define positions to move the robot tool for the remainder of the program
 #############################################################################################
 def runProgram():
+    global zeroOption
     while True:
         print("Set coordinate and tool position of the gantry:\n")
-        x = -1
-        while (type(x) != int or x < 0):
+        x = ""
+        while (type(x) != int or x < 0 and zeroOption):
             try:
                 x = int(input("X = \n"))
-                if (x < 0):
+                if (x < 0 and zeroOption):
                     print("Make sure X >= 0")
             except:
                 print("X must be an integer")
-        y = -1
-        while (type(y) != int or y < 0):
+        y = ""
+        while (type(y) != int or y < 0 and zeroOption):
             try:
                 y = int(input("Y = \n"))
-                if (y < 0):
+                if (y < 0 and zeroOption):
                     print("Make sure Y >= 0")
             except:
                 print("Y must be an integer")
-        z = -1
-        while (type(z) != int or z < 0):
+        z = ""
+        while (type(z) != int or z < 0 and zeroOption):
             try:
                 z = int(input("Z = \n"))
-                if (z < 0):
+                if (z < 0 and zeroOption):
                     print("Make sure Z >= 0")
             except:
                 print("Z must be an integer")
@@ -203,7 +207,7 @@ if (control == "m"):
     runProgram()
 elif (control == "a"):
     zeroRoutine("auto")
-    removeSolenoid()
+    replaceSolenoid()
     runProgram()
 
 arduino.close()
