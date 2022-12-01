@@ -7,9 +7,10 @@ from tkinter import messagebox
 ##################################################################
 # Global Variables
 ##################################################################
-global stowPos, solPos, clampAngle, zeroed
-solPos = (85, 279, 27)
-stowPos = (336, 274, 27)
+global stowPos, solPos, stashPos, clampAngle, zeroed
+solPos = (83, 278, 28)
+stowPos = (332, 277, 27)
+stashPos = (221, 99, 27)
 clampClosed = 85
 clampOpen = 0
 zeroed = False
@@ -141,7 +142,27 @@ def replaceSolenoid():
 ## Remove the system solenoid and place it in the trash location
 ########################################################################
 def removeSolenoid():
-    print("Solenoid")
+    global stowPos, solPos, stashPos, clampClosed, clampOpen
+    setPositionBlocking(solPos[0], solPos[1], 0, clampOpen, 0)  # Move in front of the solenoid
+    sleep(3)
+    setPositionBlocking(solPos[0], solPos[1], solPos[2], clampOpen, 0)  # The tool is in position
+    sleep(3)
+    setPositionBlocking(solPos[0], solPos[1], solPos[2], clampClosed, 0)  # Clamp down on the solenoid
+    sleep(3)
+    setPositionBlocking(solPos[0], solPos[1], 10, clampClosed, 0)  # Move the solenoid out
+    sleep(3)
+    setPositionBlocking(stashPos[0], stashPos[1], 10, clampClosed, 0)  # Move to the X, Y position of the stow location
+    sleep(3)
+    setPositionBlocking(stashPos[0], stashPos[1], 17, clampClosed, 0)  # Move the Z-axis tool closer
+    sleep(3)
+    setPositionBlocking(stashPos[0], stashPos[1], 22, clampClosed, 0)  # Move the Z-axis tool closer
+    sleep(3)
+    setPositionBlocking(stashPos[0], stashPos[1], stashPos[2], clampClosed, 0)  # The tool is in position
+    sleep(3)
+    setPositionBlocking(stashPos[0], stashPos[1], stashPos[2], clampOpen, 0)  # Open the clamp
+    sleep(3)
+    setPositionBlocking(stashPos[0], stashPos[1], 10, clampOpen, 0)  # Move the Z-axis tool out
+    sleep(3)
 
 ########################################################
 # Function to zero the motors
@@ -189,7 +210,7 @@ zeroBtn = tkinter.Button(root,text="Zero Motors",font=('calibre',24,'bold'),bg="
 subBtn = tkinter.Button(root,text="Send Coordinates",font=('calibre',24,'bold'),bg="Red",command=manualPosition)
 removeBtn = tkinter.Button(root,text="Remove Solenoid",font=('calibre',24,'bold'),bg="Red",command=removeSolenoid)
 replaceBtn = tkinter.Button(root,text="Replace Solenoid",font=('calibre',24,'bold'),bg="Red",command=replaceSolenoid)
-top_label.grid(row=0,column=0,columnspan=2,sticky=tkinter.EW)
+top_label.grid(row=0, column=0, columnspan=2,sticky=tkinter.EW)
 x_label.grid(row=1,column=0,sticky=tkinter.EW)
 x_entry.grid(row=1,column=1,sticky=tkinter.EW,padx=50,pady=10)
 y_label.grid(row=2,column=0,sticky=tkinter.EW)
