@@ -9,9 +9,9 @@ from tkinter import messagebox
 ##################################################################
 global stowPos, rSolPos, solPos, stashPos, clampAngle, zeroed
 solPos = (83, 278, 28)
-rSolPos = (86, 278, 27)
+rSolPos = (86, 280, 27)
 stowPos = (332, 277, 27)
-stashPos = (221, 99, 27)
+stashPos = (224, 99, 28)
 clampClosed = 85
 clampOpen = 0
 zeroed = False

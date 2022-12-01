@@ -373,11 +373,14 @@ void limit_zmin() {
   }
 }
 void limit_xmax() {
-  flags[3] = digitalRead(LIMIT_PIN_XMAX);
+  flags[3] = false;
+  //flags[3] = digitalRead(LIMIT_PIN_XMAX);
 }
 void limit_ymax() {
-  flags[4] = digitalRead(LIMIT_PIN_YMAX);
+  flags[4] = false;
+  //flags[4] = digitalRead(LIMIT_PIN_YMAX);
 }
 void limit_zmax() {
-  flags[5] = digitalRead(LIMIT_PIN_ZMAX);
+  flags[5] = false;
+  //flags[5] = digitalRead(LIMIT_PIN_ZMAX);
 }
