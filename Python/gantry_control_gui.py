@@ -118,7 +118,7 @@ def manualPosition():
 ########################################################################
 def replaceSolenoid():
     global stowPos, solPos, clampClosed, clampOpen
-    setPositionBlocking(stowPos[0], stowPos[1], 0, clampOpen, 0)  # Move in front of the solenoid
+    setPositionBlocking(stowPos[0], stowPos[1], 10, clampOpen, 0)  # Move in front of the solenoid
     sleep(3)
     setPositionBlocking(stowPos[0], stowPos[1], stowPos[2], clampOpen, 0)  # The tool is in position
     sleep(3)
@@ -136,7 +136,7 @@ def replaceSolenoid():
     sleep(3)
     setPositionBlocking(solPos[0], solPos[1], solPos[2], clampOpen, 0)  # Open the clamp
     sleep(3)
-    setPositionBlocking(stowPos[0], stowPos[1], 10, clampOpen, 0)  # Move the Z-axis tool out
+    setPositionBlocking(solPos[0], solPos[1], 10, clampOpen, 0)  # Move the Z-axis tool out
     sleep(3)
 
 ########################################################################
@@ -144,7 +144,7 @@ def replaceSolenoid():
 ########################################################################
 def removeSolenoid():
     global stowPos, rSolPos, stashPos, clampClosed, clampOpen
-    setPositionBlocking(rSolPos[0], rSolPos[1], 0, clampOpen, 0)  # Move in front of the solenoid
+    setPositionBlocking(rSolPos[0], rSolPos[1], 10, clampOpen, 0)  # Move in front of the solenoid
     sleep(3)
     setPositionBlocking(rSolPos[0], rSolPos[1], rSolPos[2], clampOpen, 0)  # The tool is in position
     sleep(3)
