@@ -7,8 +7,9 @@ from tkinter import messagebox
 ##################################################################
 # Global Variables
 ##################################################################
-global stowPos, solPos, stashPos, clampAngle, zeroed
+global stowPos, rSolPos, solPos, stashPos, clampAngle, zeroed
 solPos = (83, 278, 28)
+rSolPos = (86, 278, 27)
 stowPos = (332, 277, 27)
 stashPos = (221, 99, 27)
 clampClosed = 85
@@ -142,14 +143,14 @@ def replaceSolenoid():
 ## Remove the system solenoid and place it in the trash location
 ########################################################################
 def removeSolenoid():
-    global stowPos, solPos, stashPos, clampClosed, clampOpen
-    setPositionBlocking(solPos[0], solPos[1], 0, clampOpen, 0)  # Move in front of the solenoid
+    global stowPos, rSolPos, stashPos, clampClosed, clampOpen
+    setPositionBlocking(rSolPos[0], rSolPos[1], 0, clampOpen, 0)  # Move in front of the solenoid
     sleep(3)
-    setPositionBlocking(solPos[0], solPos[1], solPos[2], clampOpen, 0)  # The tool is in position
+    setPositionBlocking(rSolPos[0], rSolPos[1], rSolPos[2], clampOpen, 0)  # The tool is in position
     sleep(3)
-    setPositionBlocking(solPos[0], solPos[1], solPos[2], clampClosed, 0)  # Clamp down on the solenoid
+    setPositionBlocking(rSolPos[0], rSolPos[1], rSolPos[2], clampClosed, 0)  # Clamp down on the solenoid
     sleep(3)
-    setPositionBlocking(solPos[0], solPos[1], 10, clampClosed, 0)  # Move the solenoid out
+    setPositionBlocking(rSolPos[0], rSolPos[1], 10, clampClosed, 0)  # Move the solenoid out
     sleep(3)
     setPositionBlocking(stashPos[0], stashPos[1], 10, clampClosed, 0)  # Move to the X, Y position of the stow location
     sleep(3)
