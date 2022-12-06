@@ -342,9 +342,6 @@ void serialEvent() {
       flags[2] = false;
       allZeroed = false;
       startFlag = true;
-      switchCount[0] = 0;
-      switchCount[1] = 0;
-      switchCount[2] = 0;
     }
     else if (data.equals("nozero")) {
       startFlag = true;
@@ -362,19 +359,22 @@ void serialEvent() {
  */
 void limit_xmin() {
   switchCount[0]++;
-  if (!zeroed[0] && switchCount[0] == 2) {
+  if (!zeroed[0] && switchCount[0] == 5) {
+    switchCount[0] = 0;
     flags[0] = digitalRead(LIMIT_PIN_XMIN);
   }
 }
 void limit_ymin() {
   switchCount[1]++;
-  if (!zeroed[1] && switchCount[1] == 2) {
+  if (!zeroed[1] && switchCount[1] == 5) {
+    switchCount[1] = 0;
     flags[1] = digitalRead(LIMIT_PIN_YMIN);
   }
 }
 void limit_zmin() {
   switchCount[2]++;
   if (!zeroed[2] && switchCount[2] == 5) {
+    switchCount[2] = 0;
     flags[2] = digitalRead(LIMIT_PIN_ZMIN);
   }
 }

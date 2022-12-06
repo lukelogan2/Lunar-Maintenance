@@ -117,7 +117,7 @@ void setup() {
     steppers[i].setAcceleration(100.0);
   }
   myservo.attach(TOOL_PIN);  // attaches the servo on pin 9 to the servo object
-
+  myservo.write(tool_pos);
   // Initialize solenoid to close
   pinMode(valve_pin,OUTPUT);
   digitalWrite(valve_pin,sol_pos);

@@ -8,10 +8,10 @@ from tkinter import messagebox
 # Global Variables
 ##################################################################
 global stowPos, rSolPos, solPos, stashPos, clampAngle, zeroed
-solPos = (83, 278, 28)
-rSolPos = (86, 280, 27)
-stowPos = (332, 277, 27)
-stashPos = (224, 99, 28)
+solPos = (81, 283, 27)
+rSolPos = (81, 283, 27)
+stowPos = (329, 280, 27)
+stashPos = (220, 103, 27)
 clampClosed = 85
 clampOpen = 0
 zeroed = False
@@ -31,7 +31,6 @@ y_var = tkinter.IntVar()
 z_var = tkinter.IntVar()
 c_var = tkinter.IntVar()
 s_var = tkinter.IntVar()
-check_var = tkinter.IntVar()
 
 ##################################################################
 # Setup Serial Communication with Arduino
@@ -105,6 +104,8 @@ def manualPosition():
     z = z_var.get()
     c = c_var.get()
     s = s_var.get()
+    setPosition(x, y, z, c, s)
+    '''
     if (not zeroed and c >= 0 and c <= 180 and (s==0 or s==1)):
         setPosition(x,y,z,c,s)
     else:
@@ -112,7 +113,7 @@ def manualPosition():
             setPosition(x, y, z, c, s)
         else:
             tkinter.messagebox.showwarning(title="Warning", message="Invalid Input")
-
+    '''
 ########################################################################
 ## Remove the stow solenoid and place it in the system location
 ########################################################################
@@ -134,9 +135,11 @@ def replaceSolenoid():
     sleep(3)
     setPositionBlocking(solPos[0], solPos[1], solPos[2], clampClosed, 0)  # The tool is in position
     sleep(3)
+    setPositionBlocking(solPos[0], solPos[1]+1, solPos[2], clampClosed, 0)  # The tool is in position
+    sleep(3)
     setPositionBlocking(solPos[0], solPos[1], solPos[2], clampOpen, 0)  # Open the clamp
     sleep(3)
-    setPositionBlocking(solPos[0], solPos[1], 10, clampOpen, 0)  # Move the Z-axis tool out
+    setPositionBlocking(solPos[0], solPos[1], 15, clampOpen, 0)  # Move the Z-axis tool out
     sleep(3)
 
 ########################################################################
@@ -154,15 +157,19 @@ def removeSolenoid():
     sleep(3)
     setPositionBlocking(stashPos[0], stashPos[1], 10, clampClosed, 0)  # Move to the X, Y position of the stow location
     sleep(3)
-    setPositionBlocking(stashPos[0], stashPos[1], 17, clampClosed, 0)  # Move the Z-axis tool closer
+    setPositionBlocking(stashPos[0], stashPos[1], 16, clampClosed, 0)  # Move the Z-axis tool closer
     sleep(3)
-    setPositionBlocking(stashPos[0], stashPos[1], 22, clampClosed, 0)  # Move the Z-axis tool closer
+    setPositionBlocking(stashPos[0], stashPos[1], 19, clampClosed, 0)  # Move the Z-axis tool closer
+    sleep(3)
+    setPositionBlocking(stashPos[0], stashPos[1], 24, clampClosed, 0)  # Move the Z-axis tool closer
     sleep(3)
     setPositionBlocking(stashPos[0], stashPos[1], stashPos[2], clampClosed, 0)  # The tool is in position
     sleep(3)
+    setPositionBlocking(stashPos[0], stashPos[1]+1, stashPos[2], clampClosed, 0)  # The tool is in position
+    sleep(3)
     setPositionBlocking(stashPos[0], stashPos[1], stashPos[2], clampOpen, 0)  # Open the clamp
     sleep(3)
-    setPositionBlocking(stashPos[0], stashPos[1], 10, clampOpen, 0)  # Move the Z-axis tool out
+    setPositionBlocking(stashPos[0], stashPos[1], 15, clampOpen, 0)  # Move the Z-axis tool out
     sleep(3)
 
 ########################################################
